@@ -18,6 +18,34 @@ import { govActive, removeTask, gov_tasks } from './governor.js';
 import { bioseed } from './resets.js';
 import { loadTab } from './index.js';
 
+export function handlePlasmidParameter() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const plasmidParam = urlParams.get('plasmid');
+    
+    if (plasmidParam) {
+        const plasmidValue = parseInt(plasmidParam);
+        if (!isNaN(plasmidValue)) {
+            if (plasmidValue > 0) {
+                // Add plasmids
+                if (global.race.universe === 'antimatter') {
+                    global.prestige.AntiPlasmid.count += plasmidValue;
+                } else {
+                    global.prestige.Plasmid.count += plasmidValue;
+                }
+            } else if (plasmidValue < 0) {
+                // Remove plasmids (but don't go below 0)
+                if (global.race.universe === 'antimatter') {
+                    global.prestige.AntiPlasmid.count = Math.max(0, global.prestige.AntiPlasmid.count + plasmidValue);
+                } else {
+                    global.prestige.Plasmid.count = Math.max(0, global.prestige.Plasmid.count + plasmidValue);
+                }
+            }
+            // Clear the parameter from URL to prevent repeated application
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+}
+
 export const actions = {
     evolution: {
         rna: {
@@ -3405,7 +3433,7 @@ export const actions = {
             },
             category: 'commercial',
             reqs: { theatre: 1 },
-            not_trait: ['joyless','cataclysm'],
+            not_trait: ['joyless','cataclysm','lone_survivor'],
             cost: {
                 Money(offset){ return costMultiplier('amphitheatre', offset, 500, 1.55); },
                 Lumber(offset){ return costMultiplier('amphitheatre', offset, 50, 1.75); },
@@ -3915,7 +3943,7 @@ export const actions = {
                 }
                 let gain = (base * multiplier);
                 if (global.tech['supercollider']){
-                    let ratio = global.tech['tp_particles'] || (global.tech['particles'] && global.tech.particles >= 3) ? 12.5: 25;
+                    let ratio = global.tech['tp_particles'] || (global.tech['particles'] && global.tech['particles'] >= 3) ? 12.5: 25;
                     gain *= (global.tech['supercollider'] / ratio) + 1;
                 }
                 if (global.race['orbit_decayed']){
@@ -7159,7 +7187,7 @@ export function actionDesc(parent,c_action,obj,old,action,a_type,bres){
                     cost.append($(`<div class="${color} res-${res}" data-${res}="${res_cost}">${label}: ${res_cost}${aria}</div>`));
                 }
             }
-            else if (res !== 'Morale' && res !== 'Army' && res !== 'Bool'){
+            else if (res !== 'Morale' && res !== 'Army' && res !== 'HellArmy' && res !== 'Troops' && res !== 'Structs' && res !== 'Bool' && res !== 'Custom'){
                 let res_cost = costs[res]();
                 if (res_cost > 0){
                     let aria = '';
